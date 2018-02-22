@@ -43,7 +43,7 @@ if (($^O eq "MSWin32") or ($^O eq "Windows_NT")) {	## Many perls, eek!
     'W'		=>	40,
 );
 
-getopts('bde:f:ghlLnNpstT:wW:y', \%opts);
+getopts('bde:rf:ghlLnNpstT:wW:y', \%opts);
 
 &display_usage if $opts{'h'};
 &list_cowfiles if $opts{'l'};
@@ -56,19 +56,25 @@ $stoned = $opts{'s'};
 $tired = $opts{'t'};
 $wired = $opts{'w'};
 $young = $opts{'y'};
+$random = $opts{'r'};
 $eyes = substr($opts{'e'}, 0, 2);
 $tongue = substr($opts{'T'}, 0, 2);
 $the_cow = "";
-
 &slurp_input;
 $Text::Wrap::columns = $opts{'W'};
 @message = ($opts{'n'} ? expand(@message) : 
 	    split("\n", fill("", "", @message)));
 &construct_balloon;
 &construct_face;
-&get_cow;
+if ($random) {
+    &get_random_cow;
+}
+else {
+    &get_cow;
+}
 print @balloon_lines;
 print $the_cow;
+
 
 sub list_cowfiles {
     my $basedir;
@@ -178,10 +184,28 @@ sub get_cow {
     die "$progname: $@\n" if $@;
 }
 
+sub get_random_cow {
+## 
+## Get a random cow from the list of available cows;
+## 
+    my @dirfiles;
+    opendir(COWDIR, $cowpath) || die "$0: Cannot open $cowpath\n";
+    for my $file (readdir COWDIR) {
+        if ($file =~ s/\.cow$//) {
+            push(@dirfiles, $file);
+            # print("File:", $file, "\n");
+        }
+    }
+    closedir(COWDIR);
+    $full = "$cowpath/$dirfiles[rand @dirfiles].cow";
+    do $full;
+    die "$progname: $@\n" if $@;
+}
+
 sub display_usage {
 	die <<EOF;
 cow{say,think} version $version, (c) 1999 Tony Monroe
-Usage: $progname [-bdgpstwy] [-h] [-e eyes] [-f cowfile] 
+Usage: $progname [-bdgpstwy] [-h] [-e eyes] [-f cowfile | -r random] 
           [-l] [-n] [-T tongue] [-W wrapcolumn] [message]
 EOF
 }
